@@ -39,7 +39,7 @@ GitHub Pages target:
   is recorded as an explicit omission while the live snapshots are captured.
 - Accepts official five- or six-component `EVENOTA` bundles, wrapped
   `firmware_box.bin` components, and validated raw case images.
-- Recognizes and offers all 15 archived official G2 SHA-256 values. Custom
+- Recognizes and offers all 16 archived official G2 SHA-256 values. Custom
   firmware is excluded from the catalog and both installation paths.
 - Offers all 12 archived official R1 releases through signed Nordic Secure
   DFU; bootloader unlocking and owner-key replacement are not included.
@@ -1090,7 +1090,7 @@ and both routes receive read-only liveness verification.
 
 ## Firmware archive
 
-The archive builder offers all 15 official G2 releases represented by the
+The archive builder offers all 16 official G2 releases represented by the
 evidence included in this repository. It also verifies and archives every R1 Secure DFU package
 exposed by the authenticated compatibility API, with exact CDN size, MD5,
 SHA-256, application, and signed init-packet pins:
@@ -1362,3 +1362,11 @@ The G2 product image is a user-supplied Even Realities CDN asset and is not
 granted additional rights by this repository's MIT license. The interface and
 social preview use the current Even Realities editorial palette: warm white,
 ink black, and Even yellow.
+
+### September 8, 2026 vendor firmware check
+
+With app version 2.2.10, both authenticated Even firmware endpoints selected
+G2 **2.2.10.10** and R1 **2.2.9.0003**. The R1 package was downloaded again
+and is byte-identical to the already archived version; no R1 2.2.10 package
+was offered. CDN size and MD5 were checked before pinning SHA-256.
+See `docs/firmware/2.2.10-vendor-check.json` for the public release metadata.
