@@ -512,6 +512,7 @@ export async function requestG2BleDevice(
     expectedSerial = null,
     expectedName = null,
     tokens = G2_KNOWN_NAME_TOKENS,
+    chooserTimeoutMs = 120_000,
   } = {},
 ) {
   if (!["left", "right"].includes(side)) {
@@ -522,7 +523,7 @@ export async function requestG2BleDevice(
       "Web Bluetooth is unavailable. Open the WebFlasher in current Chrome.",
     );
   }
-  const device = await bluetooth.requestDevice({
+  const request = bluetooth.requestDevice({
     // Side-specific by construction: the LEFT button offers only `_L_` names
     // and the RIGHT button only `_R_` names. See buildG2ChooserFilters for how
     // a mid-string marker is expressed in a grammar that has only prefixes.
@@ -540,6 +541,19 @@ export async function requestG2BleDevice(
       G2_BLE_CONTROL_SERVICE,
     ],
   });
+  let chooserTimer;
+  const device = await Promise.race([
+    request,
+    new Promise((_, reject) => {
+      chooserTimer = setTimeout(() => {
+        const error = new Error(
+          `The browser did not return a ${side} Bluetooth chooser result within two minutes. If no picker appeared, open this WebFlasher in desktop Chrome or Edge and try again. No firmware bytes were sent.`,
+        );
+        error.code = "G2_CHOOSER_TIMEOUT";
+        reject(error);
+      }, chooserTimeoutMs);
+    }),
+  ]).finally(() => clearTimeout(chooserTimer));
   const observedSide = g2BleDeviceSide(device?.name);
   if (observedSide !== side) {
     device?.gatt?.disconnect();

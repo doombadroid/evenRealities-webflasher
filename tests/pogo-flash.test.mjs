@@ -69,6 +69,7 @@ import {
   POGO_DATA_INPLACE_RESEND_LIMIT,
   POGO_DATA_INPLACE_RECOVERY_BUDGET,
   POGO_DATA_INPLACE_SETTLE_MS,
+  SilentTempleReplyError,
   classifyInPlaceDataRecovery,
   readPogoFlashResponseFrame,
   readPogoFlashResponseHeader,
@@ -2540,8 +2541,15 @@ test("a silent DATA record is resent in place instead of ending the attempt", ()
   // frozen at expectedSequence × 1000 — a route-silent window swallowed the
   // record. That is transient evidence, so the record is resent in place with
   // an escalating settle, bounded per record and per attempt.
-  const silent = new RetryablePogoFlashError(
+  const silent = new SilentTempleReplyError(
     "No complete temple response arrived through the Case bridge.",
+  );
+  assert.deepEqual(
+    classifyInPlaceDataRecovery(new RetryablePogoFlashError("Transport failure"), {
+      resendsForRecord: 0,
+      recoveriesThisAttempt: 0,
+    }),
+    { action: "abort" },
   );
   assert.deepEqual(
     classifyInPlaceDataRecovery(silent, {
