@@ -245,6 +245,31 @@ const RELEASES = [
     notes: "1. Terminal Mode can now run alongside other features, with access from the App Home screen.\n2. Added real-time session sync with the Agent for Terminal on both phone and glasses.\n3. Improved Even Hub plug-in startup, exit, and audio reliability.\n4. Improved Bluetooth pairing, reconnection, and firmware update reliability.",
   },
   {
+    // Faceclaw's own patch set (jimrandomh/g2flash), rebuilt here from the
+    // pinned stock 2.3.0.24 base plus the recipe in this release's directory.
+    // The bundle still reports 2.3.0.24 internally, so internalVersion and
+    // reportedVersion stay on the stock string while the release carries -fc.
+    version: "2.3.0.24-fc",
+    internalVersion: "2.3.0.24",
+    reportedVersion: "2.3.0.24",
+    channel: "custom",
+    displayName: "Faceclaw CFW 2.3.0.24-fc",
+    hash: "2b4394b6d0e52c861dc04ef04b74f3b4",
+    sha256: "90b932552e987fc554e6f748e50989503aaff0a93a3915702eacd96e3bd99e9b",
+    size: 4609075,
+    baseVersion: "2.3.0.24",
+    baseSha256: "187ccf2bcc5c17a212106e8a376745511e8289c4232b634a7ea94b9bf25a0979",
+    patchFileName: "faceclaw-cfw-2.3.0.24-fc.patches.json",
+    patchCount: 38,
+    capabilities: [
+      "Faceclaw renders its own screens to the lenses",
+      "ANCS notification relay hooked in the stock ANCS client",
+      "Ring reports delivered unfiltered under a framebuffer lease",
+    ],
+    notes:
+      "Faceclaw custom firmware: 37 in-place patches plus one 71,112-byte append, applied to stock 2.3.0.24. Flashed over the charging case this is a glasses-only recovery target; the stock case bundle is unchanged.",
+  },
+  {
     version: "2.0.1.14",
     hash: "09fe9c0df7b14385c023bc35a364b3a9",
     size: 3232068,
@@ -365,6 +390,33 @@ function digest(algorithm, data) {
   return createHash(algorithm).update(data).digest("hex");
 }
 
+// A release's identity and trust label follow its channel. These defaults were
+// channel-aware before custom firmware was removed; flattening them to
+// "official-pinned" labels a reviewed CFW as a pinned vendor image, which is
+// the one claim the UI must never make on our behalf.
+function channelOf(release) {
+  return release.channel ?? "official";
+}
+
+function trustFor(release) {
+  if (release.trust) return release.trust;
+  return channelOf(release) === "custom" ? "reviewed-custom" : "official-pinned";
+}
+
+function releaseIdFor(release) {
+  return release.id ?? `g2-${channelOf(release)}-${release.version}`;
+}
+
+// Where this deployment serves its own archived firmware from. Read from
+// package.json so a fork publishes its own images instead of pointing new
+// users at the upstream project's GitHub Pages site.
+const pagesBase = JSON.parse(
+  await readFile(
+    path.join(path.dirname(fileURLToPath(import.meta.url)), "..", "package.json"),
+    "utf8",
+  ),
+).homepage.replace(/\/+$/, "");
+
 function archiveKeyFor(release) {
   if (release.channel === "custom") {
     if (!/^[a-f0-9]{64}$/.test(release.sha256 ?? "")) {
@@ -477,8 +529,7 @@ async function saveRelease(root, release, fallbackRoots) {
   const directory = path.join(root, archiveKey);
   await mkdir(directory, { recursive: true });
   const sourceFile = release.fileName ?? `${release.hash}.bin`;
-  const customSourceRoot =
-    `https://am-guru.github.io/evenRealities-webflasher/firmware-updates/g2/${archiveKey}`;
+  const customSourceRoot = `${pagesBase}/firmware-updates/g2/${archiveKey}`;
   const sourceUrl = release.sourceUrl ?? (
     release.channel === "custom"
       ? `${customSourceRoot}/${sourceFile}`
@@ -551,7 +602,11 @@ async function saveRelease(root, release, fallbackRoots) {
       ? `public/firmware-updates/g2/${archiveKey}/${release.patchFileName}`
       : null
   );
-  const patchFallbackRoot = release.patchFallbackRoot ?? "webflasher";
+  // The default patch fallback is built relative to this repository
+  // ("public/firmware-updates/g2/<key>/<file>"), so it resolves against the
+  // repository root. "webflasher" was a sibling-checkout root that this fork
+  // does not define, which made every local patch recipe throw on path.join.
+  const patchFallbackRoot = release.patchFallbackRoot ?? "repository";
   if (patchSourceUrl) {
     let patchBytes;
     if (release.preferLocalEvidence && patchFallback) {
@@ -679,7 +734,7 @@ async function saveRelease(root, release, fallbackRoots) {
         internalVersion: parsed.version,
         reportedVersion: release.reportedVersion ?? parsed.version,
         channel: release.channel ?? "official",
-        trust: release.trust ?? "official-pinned",
+        trust: trustFor(release),
         baseVersion: release.baseVersion ?? null,
         hardwareValidated: HARDWARE_VALIDATED_TEMPLE_IMAGES.has(sha256),
       },
@@ -729,7 +784,7 @@ async function saveRelease(root, release, fallbackRoots) {
     internalVersion: parsed.version,
     reportedVersion: release.reportedVersion ?? parsed.version,
     channel: release.channel ?? "official",
-    trust: release.trust ?? "official-pinned",
+    trust: trustFor(release),
     hardwareValidated: HARDWARE_VALIDATED_TEMPLE_IMAGES.has(sha256),
     baseVersion: release.baseVersion ?? null,
     notes: release.notes ?? null,
@@ -785,10 +840,10 @@ async function saveRelease(root, release, fallbackRoots) {
   process.stdout.write(`verified (${parsed.chargingCase.version} case)\n`);
 
   return {
-    id: release.id ?? `g2-official-${release.version}`,
+    id: releaseIdFor(release),
     ...(release.displayName ? { displayName: release.displayName } : {}),
     channel: release.channel ?? "official",
-    trust: release.trust ?? "official-pinned",
+    trust: trustFor(release),
     hardwareValidated: HARDWARE_VALIDATED_TEMPLE_IMAGES.has(sha256),
     version: release.version,
     ...(archiveKey !== release.version ? { archiveKey } : {}),

@@ -35,6 +35,8 @@ const OFFICIAL_G2_2_2_10_10_SHA256 =
   "927879057685a4147c6ba1fe33e5f3740d3cc48f87141a9039204d94516e65b8";
 const OFFICIAL_G2_2_2_9_22_SHA256 =
   "a03fbea9f68a9de6bc271daabb9f3a41c59053d1086622c76a4e990f829cc561";
+const FACECLAW_CFW_2_3_0_24_SHA256 =
+  "90b932552e987fc554e6f748e50989503aaff0a93a3915702eacd96e3bd99e9b";
 
 // The catalog production actually served on 2026-07-28 and is older than the
 // current official releases pinned by this build.
@@ -71,6 +73,7 @@ test("flags a pinned image the served library is too old to offer", () => {
     missing.map((target) => target.imageSha256),
     [
       OFFICIAL_G2_2_3_2_14_SHA256,
+      FACECLAW_CFW_2_3_0_24_SHA256,
       OFFICIAL_G2_2_3_0_24_SHA256,
       OFFICIAL_G2_2_2_10_10_SHA256,
       OFFICIAL_G2_2_2_9_22_SHA256,
@@ -94,7 +97,8 @@ test("blocks firmware mutation when the served library is behind the build", () 
         error.missingPinnedImages.map((target) => target.imageSha256),
         [
           OFFICIAL_G2_2_3_2_14_SHA256,
-      OFFICIAL_G2_2_3_0_24_SHA256,
+          FACECLAW_CFW_2_3_0_24_SHA256,
+          OFFICIAL_G2_2_3_0_24_SHA256,
           OFFICIAL_G2_2_2_10_10_SHA256,
           OFFICIAL_G2_2_2_9_22_SHA256,
           OFFICIAL_G2_2_2_8_4_SHA256,
@@ -107,14 +111,19 @@ test("blocks firmware mutation when the served library is behind the build", () 
   );
 });
 
-test("offers only official firmware and covers every compiled writer target", async () => {
+test("covers every compiled writer target and still excludes retired images", async () => {
   const catalog = JSON.parse(
     await readFile(
       new URL("../public/firmware-updates/index.json", import.meta.url),
       "utf8",
     ),
   ).releases;
-  assert.deepEqual(catalog.filter((release) => release.channel !== "official"), []);
+  assert.deepEqual(
+    catalog
+      .filter((release) => (release.channel ?? "official") !== "official")
+      .map((release) => release.id),
+    ["g2-custom-2.3.0.24-fc"],
+  );
   assert.equal(
     catalog.some((release) => release.sha256 === RETIRED_CFW_2_2_8_11_SHA256),
     false,
@@ -168,7 +177,7 @@ test("excludes advertisement-patched CFW releases from both mutation paths", asy
   }
 });
 
-test("ships no custom firmware releases", async () => {
+test("pins every custom release to an archived official base", async () => {
   const catalog = JSON.parse(
     await readFile(
       new URL("../public/firmware-updates/index.json", import.meta.url),
@@ -176,7 +185,23 @@ test("ships no custom firmware releases", async () => {
     ),
   ).releases;
   const customReleases = catalog.filter((release) => release.channel === "custom");
-  assert.deepEqual(customReleases, []);
+  assert.ok(customReleases.length > 0, "the CFW channel ships at least one release");
+  for (const release of customReleases) {
+    assert.match(release.sha256, /^[a-f0-9]{64}$/, release.id);
+    assert.match(release.patchSha256 ?? "", /^[a-f0-9]{64}$/, release.id);
+    // Its base must be an official release this build actually serves,
+    // otherwise the patch recipe cannot be replayed to check the image.
+    const base = catalog.find(
+      (candidate) =>
+        candidate.version === release.baseVersion &&
+        (candidate.channel ?? "official") === "official",
+    );
+    assert.ok(base, `${release.id} names a base that is not in the catalog`);
+    assert.ok(
+      TEMPLE_FLASH_TARGETS.some((target) => target.imageSha256 === release.sha256),
+      `${release.id} is not in the compiled writer allowlist`,
+    );
+  }
 });
 
 test("says nothing when it cannot tell", () => {

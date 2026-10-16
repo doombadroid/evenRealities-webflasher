@@ -75,7 +75,7 @@ test("fork documentation and runtime do not reference the source project", async
   }
 });
 
-test("fork publishes and permits official firmware only", async () => {
+test("fork publishes only pinned firmware, official or reviewed custom", async () => {
   const catalog = JSON.parse(
     await readFile(
       new URL("public/firmware-updates/index.json", repoUrl),
@@ -83,16 +83,31 @@ test("fork publishes and permits official firmware only", async () => {
     ),
   );
   assert.ok(catalog.releases.length > 0);
-  assert.ok(catalog.releases.every((release) => release.channel === "official"));
+  for (const release of catalog.releases) {
+    const channel = release.channel ?? "official";
+    assert.ok(
+      channel === "official" || channel === "custom",
+      `${release.id} uses an unknown channel`,
+    );
+    assert.match(release.sha256, /^[a-f0-9]{64}$/, `${release.id} is not pinned`);
+    if (channel !== "custom") continue;
+    // A custom release must be reproducible from a pinned official base, so
+    // what it contains can be re-derived rather than trusted.
+    assert.equal(release.trust, "reviewed-custom", release.id);
+    assert.match(release.baseVersion ?? "", /^2(?:\.[0-9]+)+$/, release.id);
+    assert.match(release.patchSha256 ?? "", /^[a-f0-9]{64}$/, release.id);
+    assert.ok(release.patchUrl?.startsWith("/firmware-updates/g2/"), release.id);
+    // The charging case bundle is untouched by a glasses-only patch set.
+    assert.equal(release.recoveryTarget, "glasses", release.id);
+    assert.equal(release.caseRecoveryEligible, false, release.id);
+  }
 
+  // The retired advertised-name CFW stays out of the compiled writer allowlist.
   const targets = await readFile(
     new URL("src/lib/templeFlashTargets.js", repoUrl),
     "utf8",
   );
-  assert.doesNotMatch(targets, /Custom|CFW|105032302d02/i);
-
-  const app = await readFile(new URL("src/App.jsx", repoUrl), "utf8");
-  assert.doesNotMatch(app, /\bCFW\b|Stock ↔ CFW|channel === "custom"/i);
+  assert.doesNotMatch(targets, /105032302d02/i);
 });
 
 test("fork has one canonical firmware catalog source", async () => {

@@ -2,10 +2,10 @@
   "name": "evenrealities-webflasher",
   "version": "0.1.0",
   "private": true,
-  "homepage": "https://am-guru.github.io/evenRealities-webflasher/",
+  "homepage": "https://doombadroid.github.io/evenRealities-webflasher/",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/AM-Guru/evenRealities-webflasher.git"
+    "url": "git+https://github.com/doombadroid/evenRealities-webflasher.git"
   },
   "type": "module",
   "engines": {

@@ -47,8 +47,32 @@ if (process.env.GITHUB_SHA && release.buildSha !== process.env.GITHUB_SHA) {
 if (release.firmwareCatalogSha256 !== sha256(catalogBytes)) {
   throw new Error("release.json does not match firmware-catalog.json");
 }
-if (catalog.releases.some((entry) => entry.channel !== "official")) {
-  throw new Error("The GitHub Pages catalog must contain official firmware only");
+// Official images are pinned by SHA-256 alone. A custom image must also carry
+// the official base it was built from and the recipe that reproduces it, so a
+// published CFW can be re-derived by anyone instead of merely trusted.
+for (const entry of catalog.releases) {
+  const channel = entry.channel ?? "official";
+  if (channel === "official") continue;
+  if (channel !== "custom") {
+    throw new Error(`The catalog release ${entry.id} uses an unknown channel`);
+  }
+  if (!/^[a-f0-9]{64}$/.test(entry.sha256 ?? "")) {
+    throw new Error(`The custom release ${entry.id} is not pinned by SHA-256`);
+  }
+  if (!/^[a-f0-9]{64}$/.test(entry.patchSha256 ?? "")) {
+    throw new Error(`The custom release ${entry.id} has no pinned patch recipe`);
+  }
+  if (!entry.patchUrl?.startsWith("/firmware-updates/g2/")) {
+    throw new Error(`The custom release ${entry.id} does not publish its patch recipe`);
+  }
+  const base = catalog.releases.find(
+    (candidate) =>
+      candidate.version === entry.baseVersion &&
+      (candidate.channel ?? "official") === "official",
+  );
+  if (!base) {
+    throw new Error(`The custom release ${entry.id} names an unpublished base`);
+  }
 }
 if (catalog.releases.some((entry) => !entry.url.startsWith("/firmware-updates/g2/"))) {
   throw new Error("Every G2 catalog URL must use the firmware-updates/g2 directory");

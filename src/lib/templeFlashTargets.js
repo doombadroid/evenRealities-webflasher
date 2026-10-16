@@ -21,6 +21,15 @@ export const TEMPLE_FLASH_TARGETS = Object.freeze([
     hardwareValidated: false,
   }),
   Object.freeze({
+    imageSha256: "90b932552e987fc554e6f748e50989503aaff0a93a3915702eacd96e3bd99e9b",
+    mainSha256: "565af08183daab12a304e0592ef45c8c2e9411f99ff3a58c90db43ba99e29660",
+    mainBytes: 3829832,
+    version: "2.3.0.24",
+    reportedVersion: "2.3.0.24",
+    label: "Faceclaw CFW 2.3.0.24-fc",
+    hardwareValidated: false,
+  }),
+  Object.freeze({
     imageSha256: "187ccf2bcc5c17a212106e8a376745511e8289c4232b634a7ea94b9bf25a0979",
     mainSha256: "c07813ceaf7ed16502e94406c957eb8cf9d6e8a94ac4ba9bafaefa50ebc9ff46",
     mainBytes: 3758720,

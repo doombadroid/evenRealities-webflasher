@@ -1,6 +1,6 @@
 {
   "schemaVersion": 2,
-  "generatedAt": "2026-10-09T19:06:20.420Z",
+  "generatedAt": "2026-10-16T15:16:25.385Z",
   "source": "Even Realities CDN and release evidence included in this repository",
   "releases": [
     {
@@ -74,6 +74,86 @@
           "size": 3922636,
           "crc32c": "fbdb3e67",
           "sha256": "d6d29ec6a6d7d3f7e0abb260c54493e2e5dd0ed978346dc41061ee6522d40fc6"
+        }
+      ]
+    },
+    {
+      "id": "g2-custom-2.3.0.24-fc",
+      "displayName": "Faceclaw CFW 2.3.0.24-fc",
+      "channel": "custom",
+      "trust": "reviewed-custom",
+      "hardwareValidated": false,
+      "version": "2.3.0.24-fc",
+      "archiveKey": "2.3.0.24-fc-90b932552e98",
+      "internalVersion": "2.3.0.24",
+      "reportedVersion": "2.3.0.24",
+      "baseVersion": "2.3.0.24",
+      "notes": "Faceclaw custom firmware: 37 in-place patches plus one 71,112-byte append, applied to stock 2.3.0.24. Flashed over the charging case this is a glasses-only recovery target; the stock case bundle is unchanged.",
+      "capabilities": [
+        "Faceclaw renders its own screens to the lenses",
+        "ANCS notification relay hooked in the stock ANCS client",
+        "Ring reports delivered unfiltered under a framebuffer lease"
+      ],
+      "recoveryTarget": "glasses",
+      "caseRecoveryEligible": false,
+      "caseVersion": "1.2.57",
+      "url": "/firmware-updates/g2/2.3.0.24-fc-90b932552e98/2b4394b6d0e52c861dc04ef04b74f3b4.bin",
+      "sourceUrl": "https://doombadroid.github.io/evenRealities-webflasher/firmware-updates/g2/2.3.0.24-fc-90b932552e98/2b4394b6d0e52c861dc04ef04b74f3b4.bin",
+      "fileName": "2b4394b6d0e52c861dc04ef04b74f3b4.bin",
+      "size": 4609075,
+      "md5": "2b4394b6d0e52c861dc04ef04b74f3b4",
+      "sha256": "90b932552e987fc554e6f748e50989503aaff0a93a3915702eacd96e3bd99e9b",
+      "patchUrl": "/firmware-updates/g2/2.3.0.24-fc-90b932552e98/faceclaw-cfw-2.3.0.24-fc.patches.json",
+      "patchSha256": "380ece6545e00ad27033c528c607d091fe5e83e07acb5cb672e616c11e79e847",
+      "archivedFrom": "Repository firmware archive",
+      "mainFirmware": {
+        "runBase": "0x00438000",
+        "installedImageSize": 3829800,
+        "installedImageEnd": "0x007df028",
+        "crc32": "55fe8c6a"
+      },
+      "components": [
+        {
+          "name": "firmware/codec.bin",
+          "typeId": 4,
+          "size": 326092,
+          "crc32c": "bdcfeeac",
+          "sha256": "b06dfef7faa2f1e52d2aacd07958d4b96ffc36dca5077ac9149e48f19fc9c4d0"
+        },
+        {
+          "name": "firmware/ble_em9305.bin",
+          "typeId": 5,
+          "size": 211948,
+          "crc32c": "c074baf7",
+          "sha256": "91a38f7fc05555f86181ecb22b363e3239bfcaaa2ff6171e98524ae64821eca9"
+        },
+        {
+          "name": "firmware/touch.bin",
+          "typeId": 3,
+          "size": 34720,
+          "crc32c": "903ca49a",
+          "sha256": "c14456cd4d432815d79700b251c9a575f75c76a3710f4148c0df6ddba4cb7ba2"
+        },
+        {
+          "name": "firmware/box.bin",
+          "typeId": 6,
+          "size": 55784,
+          "crc32c": "7d443be0",
+          "sha256": "36ca0c13558f252af286ae2b36b5e576d087d21d37b15d778e7da9f502a70374"
+        },
+        {
+          "name": "ota/s200_bootloader.bin",
+          "typeId": 1,
+          "size": 149755,
+          "crc32c": "04b60910",
+          "sha256": "52ed1c4d043f278f9011d2f2e6555b668ef2ff1e312695f5c28fa7986523b75b"
+        },
+        {
+          "name": "ota/s200_firmware_ota.bin",
+          "typeId": 0,
+          "size": 3829832,
+          "crc32c": "985d297f",
+          "sha256": "565af08183daab12a304e0592ef45c8c2e9411f99ff3a58c90db43ba99e29660"
         }
       ]
     },

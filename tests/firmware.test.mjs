@@ -807,7 +807,7 @@ test("decodes Apollo510 INFOC and INFO0 recovery provisioning offline", () => {
   assert.equal(report.backupReadbackProvided, false);
 });
 
-test("ships the complete official-only catalog", async () => {
+test("ships the complete catalog: every official release plus the reviewed CFW", async () => {
   const catalog = JSON.parse(
     await readFile(
       new URL("../public/firmware-updates/index.json", import.meta.url),
@@ -826,7 +826,18 @@ test("ships the complete official-only catalog", async () => {
   assert.equal(latestOfficial.sha256, OFFICIAL_G2_SHA256["2.3.2.14"]);
   assert.equal(latestOfficial.caseVersion, "1.2.57");
   const custom = catalog.releases.filter((release) => release.channel === "custom");
-  assert.equal(custom.length, 0);
+  assert.equal(custom.length, 1);
+  const [faceclaw] = custom;
+  assert.equal(faceclaw.id, "g2-custom-2.3.0.24-fc");
+  assert.equal(faceclaw.trust, "reviewed-custom");
+  // The bundle still reports the stock string it was patched from, so the
+  // release version and the version the glasses report are not the same thing.
+  assert.equal(faceclaw.version, "2.3.0.24-fc");
+  assert.equal(faceclaw.internalVersion, "2.3.0.24");
+  assert.equal(faceclaw.baseVersion, "2.3.0.24");
+  assert.equal(faceclaw.baseVersion, catalog.releases.find(
+    (release) => release.id === "g2-official-2.3.0.24",
+  ).version);
 });
 
 test("ships the exact official G2 2.2.9.22 bundle and six components", async () => {
