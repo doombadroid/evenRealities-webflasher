@@ -66,6 +66,7 @@ import {
   verifyPogoFlashOppositePhaseStop,
   verifyPogoFlashZeroWriteSetupStop,
 } from "./pogoFlashBridge.js";
+import { buildBundleDifferencePlan } from "./differential.js";
 
 function encodeRemoteBytes(bytes) {
   let binary = "";
@@ -4401,17 +4402,37 @@ export class G2CaseSession {
   async flashPinnedTempleMain(
     firmware,
     routeSelection = "both",
-    { mode = "complete" } = {},
+    {
+      mode = "complete",
+      differenceSourceFirmware = null,
+      sourceProofMode = null,
+    } = {},
   ) {
     const { mainComponent: component, target } =
       await assertPinnedTempleFlashCandidate(firmware);
     const targetReportedVersion = target.reportedVersion ?? target.version;
-    if (mode !== "complete") {
-      throw new PogoFlashSafetyError(
-        "The EvenRealities fork flashes complete pinned official images only.",
+    if (!["complete", "differences"].includes(mode)) {
+      throw new PogoFlashSafetyError("Choose complete or differences flashing.");
+    }
+    let differencePlan = null;
+    let expectedSourceVersion = null;
+    if (mode === "differences") {
+      await assertPinnedTempleFlashCandidate(differenceSourceFirmware);
+      differencePlan = buildBundleDifferencePlan(
+        differenceSourceFirmware,
+        firmware,
+      );
+      expectedSourceVersion = differencePlan.source.version;
+      if (!differencePlan.executable) {
+        throw new PogoFlashSafetyError(
+          "The Stock/CFW difference plan is not an exact one-component transition.",
+        );
+      }
+      this.log(
+        `Difference plan verified: ${differencePlan.unchangedComponentCount} identical components omitted; transmitting the one changed, CRC-gated Apollo main.`,
+        "success",
       );
     }
-    const expectedSourceVersion = null;
     const routes =
       routeSelection === "both"
         ? ["right", "left"]
@@ -4433,20 +4454,40 @@ export class G2CaseSession {
       // retries over Web Serial and none over WebUSB).
       deviceKey: this.deviceKey,
       transport: g2CaseTransportLabel(this.port),
-      operation: "g2_case_usb_pinned_main_only",
-      flashMode: "complete",
+      operation:
+        mode === "differences"
+          ? "g2_case_usb_bundle_component_differences"
+          : "g2_case_usb_pinned_main_only",
+      flashMode: mode,
+      differencePlan,
       imageSha256: firmware.fileSha256,
       imageLabel: target.label,
       imageHardwareValidated: target.hardwareValidated,
       mainPayloadSha256: component.payloadSha256,
       installedIdentity: {
-        channel: "official",
+        channel:
+          firmware.provenance?.channel === "custom" ? "custom" : "official",
         reportedVersion: targetReportedVersion,
-        displayVersion: target.version,
+        displayVersion:
+          firmware.provenance?.channel === "custom"
+            ? `${target.version} CFW`
+            : target.version,
         evidence:
           "pinned target hashes, exact accepted byte count, FINISH acknowledgement, reset, and bilateral liveness",
       },
-      sourceValidation: null,
+      sourceValidation:
+        mode === "differences"
+          ? {
+              mode:
+                sourceProofMode ?? "caller-confirmed-source",
+              exactInstalledImageReadbackAvailable: false,
+              requiredLiveFirmware: expectedSourceVersion,
+              requiredLiveHardware: 5,
+              completeTargetMainTransferred: true,
+              sparseByteRangesTransferred: false,
+              routePreflight: null,
+            }
+          : null,
       bridgeSha256:
         POGO_FLASH_BRIDGE_SHA256,
       bridgeSha256ByYhmProfile: {

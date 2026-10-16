@@ -596,9 +596,10 @@ class MainFirmwareFlasher:
                     settle_seconds = self.late_batch_settle_seconds
                 self._settle_storage(settle_seconds)
 
-        # Version remains only an identity gate, not byte provenance. Require
-        # the checksum-valid zero-status 0x55 response instead of accepting a
-        # reset-raced timeout as success.
+        # Current reviewed CFW reports 2.2.6.11 while its Stock base reports
+        # 2.2.6.10. Version remains only an identity gate, not byte provenance:
+        # require the checksum-valid zero-status 0x55 response instead of
+        # accepting a reset-raced timeout as success.
         self._send_non_idempotent(
             production_ota_finish_request(), self.finish_timeout, "FINISH"
         )

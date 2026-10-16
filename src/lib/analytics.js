@@ -6,6 +6,8 @@ import {
 } from "./firmware.js";
 import {
   REVIEWED_CASE_VERSION,
+  REVIEWED_CFW_BASE_VERSION,
+  REVIEWED_CFW_VERSION,
 } from "./pogoFlashBridge.js";
 import {
   assessAutomaticTempleContacts,
@@ -79,7 +81,11 @@ function templeAnalytics(side, present, results) {
   const completeMainWriterCompatible = version
     ? Boolean(firmwareVersion && hardwareRevision === 5)
     : null;
-  const reviewedWriterCompatible = completeMainWriterCompatible;
+  const reviewedWriterCompatible = version
+    ? [REVIEWED_CFW_BASE_VERSION, REVIEWED_CFW_VERSION].includes(
+        firmwareVersion,
+      ) && hardwareRevision === 5
+    : null;
   return {
     side,
     present: Boolean(present),
@@ -109,6 +115,7 @@ function templeAnalytics(side, present, results) {
     voltageMv: status?.decoded?.voltageMv ?? null,
     reviewedWriterCompatible,
     completeMainWriterCompatible,
+    differentialSourceCompatible: reviewedWriterCompatible,
     version,
     status,
   };
@@ -377,8 +384,11 @@ export function buildG2DeviceAnalytics({
       recoveryAssessment: {
         mode: "running-application Apollo-main reinstall through case USB",
         requiredCaseVersion: REVIEWED_CASE_VERSION,
-        requiredTempleVersions: [],
-        requiredTempleVersionsScope: "Official pinned releases only",
+        requiredTempleVersions: [
+          REVIEWED_CFW_BASE_VERSION,
+          REVIEWED_CFW_VERSION,
+        ],
+        requiredTempleVersionsScope: "Stock-CFW differential mode only",
         completeMainSourceRequirement:
           "Any checksum-valid running G2 application on hardware revision 5",
         requiredHardwareRevision: 5,
@@ -393,7 +403,7 @@ export function buildG2DeviceAnalytics({
         applicationDeadRecoveryAvailable: false,
         bootloaderWriteAllowed: false,
         limitation:
-          "The no-flash path can issue the traced bilateral reset and verify Application-mode return. The validated Case-USB writer can reinstall only a pinned official Apollo main while each temple application and pogo UART task remain alive. It cannot read temple flash or address sparse sectors; installs use the complete target main.",
+          "The no-flash path can issue the traced bilateral reset and verify Application-mode return. The validated Case-USB writer can reinstall only a pinned Apollo main while each temple application and pogo UART task remain alive. It cannot read temple flash or address sparse sectors; cross-version installs use the complete target main, and only the exact reviewed Stock-CFW pair may omit unchanged bundle components.",
       },
       offlineRecoveryProvisioning: recoveryConfig,
     },

@@ -17,7 +17,7 @@ test("defaults recovery to a complete bilateral temple restore", () => {
 test("selects the newest official Stock release independent of catalog order", () => {
   const releases = [
     {
-      id: "preview",
+      id: "cfw",
       channel: "custom",
       version: "2.2.6.11",
       caseRecoveryEligible: false,
@@ -48,16 +48,16 @@ test("defaults the firmware selector to the newest official Stock release", () =
       caseRecoveryEligible: true,
     },
     {
-      id: "preview-old",
+      id: "cfw-old",
       channel: "custom",
-      trust: "local-unrecognized",
+      trust: "reviewed-custom",
       version: "2.2.6.10",
       caseRecoveryEligible: false,
     },
     {
-      id: "preview-current",
+      id: "cfw-current",
       channel: "custom",
-      trust: "local-unrecognized",
+      trust: "reviewed-custom",
       version: "2.2.6.11",
       displayName: "Historical test firmware (2.2.6.11)",
       caseRecoveryEligible: false,
